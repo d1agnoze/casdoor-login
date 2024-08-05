@@ -2,7 +2,9 @@ package main
 
 import (
 	"errors"
+	"fmt"
 	"log"
+	"strings"
 	"time"
 
 	"github.com/google/uuid"
@@ -45,11 +47,39 @@ func connectDB() *gorm.DB {
 }
 
 func CreateUser(db *gorm.DB, input *UserInput) error {
+	if err1 := sanitizeString(&input.Name); err1 != nil {
+		return err1
+	}
+
+	if err2 := sanitizeString(&input.SsoId); err2 != nil {
+		return err2
+	}
+
+	if err := sanitizeUUID(input.SsoId); err != nil {
+		return err
+	}
+
 	err := db.Where("sso_id = ?", input.SsoId).First(&User{}).Error
 
 	if errors.Is(err, gorm.ErrRecordNotFound) {
 		return db.Create(&User{SsoId: input.SsoId, Name: input.Name}).Error
 	}
 
+	return err
+}
+
+func sanitizeString(s *string) error {
+	if s == nil {
+		return fmt.Errorf("input string is empty")
+	}
+	*s = strings.TrimSpace(*s)
+	if len(*s) == 0 {
+		return fmt.Errorf("input string is empty")
+	}
+	return nil
+}
+
+func sanitizeUUID(s string) error {
+	_, err := uuid.Parse(s)
 	return err
 }
