@@ -1,8 +1,8 @@
 package main
 
 import (
+	"casdoordemo/err"
 	"errors"
-	"fmt"
 	"log"
 	"strings"
 	"time"
@@ -70,11 +70,11 @@ func CreateUser(db *gorm.DB, input *UserInput) error {
 
 func sanitizeString(s *string) error {
 	if s == nil {
-		return fmt.Errorf("input string is empty")
+		return &err.InvalidInputError{}
 	}
 	*s = strings.TrimSpace(*s)
 	if len(*s) == 0 {
-		return fmt.Errorf("input string is empty")
+		return &err.InvalidInputError{}
 	}
 	return nil
 }
